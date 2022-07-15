@@ -1,0 +1,92 @@
+---
+version: "2.1"
+services:
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
+    network_mode: host
+    environment:
+      - PUID=0
+      - PGID=0  
+      - VERSION=docker
+      - PLEX_CLAIM= #optional
+    volumes:
+      - /srv/dev-disk-by-uuid-66951286-bcbb-41b6-94cd-624d84fa6bb2/Media/AppData/Config/config_plex:/config
+      - /srv/dev-disk-by-uuid-66951286-bcbb-41b6-94cd-624d84fa6bb2/Media/series:/tv
+      - /srv/dev-disk-by-uuid-66951286-bcbb-41b6-94cd-624d84fa6bb2/Media/movies:/movies
+    restart: unless-stopped
+  deluge:
+    image: lscr.io/linuxserver/deluge:latest
+    container_name: deluge
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=Europe/Budapest
+      - DELUGE_LOGLEVEL=error #optional
+    volumes:
+      - /srv/dev-disk-by-uuid-66951286-bcbb-41b6-94cd-624d84fa6bb2/Media/AppData/Config/config_deluge:/config
+      - /srv/dev-disk-by-uuid-66951286-bcbb-41b6-94cd-624d84fa6bb2/Media/Downloads:/downloads
+    ports:
+      - 8112:8112
+      - 6881:6881
+      - 6881:6881/udp
+    restart: unless-stopped
+  couchpotato:
+    image: lscr.io/linuxserver/couchpotato
+    container_name: couchpotato
+    network_mode: host
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=Europe/Budapest
+    volumes:
+      - /srv/dev-disk-by-uuid-66951286-bcbb-41b6-94cd-624d84fa6bb2/Media/AppData/Config/config_couchpotato:/config
+      - /srv/dev-disk-by-uuid-66951286-bcbb-41b6-94cd-624d84fa6bb2/Media/Downloads:/downloads
+      - /srv/dev-disk-by-uuid-66951286-bcbb-41b6-94cd-624d84fa6bb2/Media/movies:/movies
+    ports:
+      - 5050:5050
+    restart: unless-stopped
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    network_mode: host
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=Europe/Budapest
+    volumes:
+      - /srv/dev-disk-by-uuid-66951286-bcbb-41b6-94cd-624d84fa6bb2/Media/AppData/Config/config_sonarr:/config
+      - /srv/dev-disk-by-uuid-66951286-bcbb-41b6-94cd-624d84fa6bb2/Media/series:/tv #optional
+      - /srv/dev-disk-by-uuid-66951286-bcbb-41b6-94cd-624d84fa6bb2/Media/Downloads:/downloads #optional
+    ports:
+      - 8989:8989
+    restart: unless-stopped
+  heimdall:
+    image: lscr.io/linuxserver/heimdall:latest
+    container_name: heimdall
+    environment:
+      - PUID=998
+      - PGID=100
+      - TZ=Europe/Budapest
+    volumes:
+      - /srv/dev-disk-by-uuid-66951286-bcbb-41b6-94cd-624d84fa6bb2/Media/AppData/Config/config_heimdall:/config
+    ports:
+      - 8081:80
+      - 8443:443
+    restart: unless-stopped
+  vpn:
+    image: ghcr.io/bubuntux/nordvpn
+    cap_add:
+      - NET_ADMIN               # Required
+      - NET_RAW                 # Required
+    environment:                # Review https://github.com/bubuntux/nordvpn#environment-variables
+      - USER=icska8009@gmail.com     # Required
+      - "PASS=SApkanka80?"         # Required
+      - CONNECT=Austria
+      - TECHNOLOGY=NordLynx
+      - NETWORK=172.16.0.0/16  # So it can be accessed within the local network
+    ports:
+      - 8082:8080
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=1  # Recomended if using ipv4 only
+
